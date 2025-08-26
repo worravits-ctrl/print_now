@@ -1,0 +1,1286 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Business Card Printer - เครื่องพิมพ์นามบัตร</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(45deg, #FF6B6B, #4ECDC4);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .content {
+            display: flex;
+            gap: 30px;
+            padding: 30px;
+        }
+
+        .controls {
+            flex: 1;
+            background: #f8f9ff;
+            padding: 25px;
+            border-radius: 15px;
+            border: 2px solid #e1e8ff;
+        }
+
+        .preview {
+            flex: 2;
+            background: white;
+            border-radius: 15px;
+            border: 2px solid #e1e8ff;
+            padding: 20px;
+        }
+
+        .control-group {
+            margin-bottom: 25px;
+            padding: 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            border-left: 4px solid #4ECDC4;
+        }
+
+        .control-group h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .control-group h3::before {
+            content: "🎛️";
+            margin-right: 8px;
+        }
+
+        .file-upload {
+            position: relative;
+            display: inline-block;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .file-upload input[type="file"] {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .file-upload-btn {
+            display: block;
+            padding: 15px 25px;
+            background: linear-gradient(45deg, #FF6B6B, #FF8E53);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+            text-align: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+        }
+
+        .file-upload-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 107, 107, 0.6);
+        }
+
+        .slider-group {
+            margin-bottom: 15px;
+        }
+
+        .slider-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #34495e;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .slider {
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: #ddd;
+            outline: none;
+            -webkit-appearance: none;
+            transition: background 0.3s;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #4ECDC4;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        }
+
+        .slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+
+        .slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #4ECDC4;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .value-display {
+            display: inline-block;
+            margin-left: 10px;
+            font-weight: bold;
+            color: #4ECDC4;
+            background: #f0f8ff;
+            padding: 4px 8px;
+            border-radius: 6px;
+            min-width: 50px;
+            text-align: center;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 25px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 15px 25px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-print {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-pdf {
+            background: linear-gradient(45deg, #f093fb, #f5576c);
+            color: white;
+            box-shadow: 0 4px 15px rgba(240, 147, 251, 0.4);
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .a4-preview {
+            width: 100%;
+            max-width: 595px;
+            height: 842px;
+            background: white;
+            border: 2px solid #ddd;
+            margin: 0 auto;
+            position: relative;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .card-container {
+            position: absolute;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: repeat(5, 1fr);
+            width: 100%;
+            height: 100%;
+        }
+
+        .business-card {
+            width: 90mm;
+            height: 54mm;
+            border: 1px dashed #ccc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #fafafa;
+            position: relative;
+            overflow: hidden;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .business-card:hover {
+            border-color: #4ECDC4;
+            box-shadow: 0 2px 8px rgba(78, 205, 196, 0.3);
+        }
+
+        .business-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+
+        .card-placeholder {
+            color: #999;
+            text-align: center;
+            font-size: 0.8rem;
+            padding: 10px;
+            line-height: 1.4;
+        }
+
+        .image-preview {
+            max-width: 100%;
+            max-height: 150px;
+            margin: 10px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .status-message {
+            margin-top: 15px;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: 500;
+            text-align: center;
+        }
+
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .units {
+            font-size: 0.8rem;
+            color: #666;
+            font-weight: normal;
+        }
+
+        .job-management {
+            background: #f0f8ff;
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #e1e8ff;
+        }
+
+        .job-info {
+            background: #e8f5e8;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+            color: #2d5016;
+            border-left: 4px solid #4CAF50;
+        }
+
+        .supabase-config {
+            background: #f0f8ff;
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #e1e8ff;
+        }
+
+        .connection-status {
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-bottom: 10px;
+        }
+
+        .connection-status.connected {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .connection-status.disconnected {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .connection-status.connecting {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .storage-info {
+            background: #e8f5e8;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            color: #2d5016;
+            border-left: 4px solid #4CAF50;
+        }
+
+        .storage-info.cloud {
+            background: #e3f2fd;
+            color: #0d47a1;
+            border-left-color: #2196F3;
+        }
+
+        @media print {
+            body { background: white; }
+            .container { box-shadow: none; }
+            .header, .controls { display: none; }
+            .content { padding: 0; }
+            .preview { border: none; background: white; }
+            .a4-preview { 
+                width: 210mm;
+                height: 297mm;
+                max-width: none;
+                border: none;
+                box-shadow: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                flex-direction: column;
+                gap: 20px;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+            
+            .a4-preview {
+                transform: scale(0.8);
+                transform-origin: top center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🖨️ Business Card Printer</h1>
+            <p>เครื่องพิมพ์นามบัตร - ปรับแต่งและพิมพ์ได้ทันที</p>
+        </div>
+        
+        <div class="content">
+            <div class="controls">
+                <div class="control-group">
+                    <h3>🌐 การตั้งค่า Supabase</h3>
+                    <div class="supabase-config">
+                        <input type="text" id="supabaseUrl" placeholder="Supabase Project URL" 
+                               style="width: 100%; padding: 10px; margin-bottom: 8px; border: 2px solid #e1e8ff; border-radius: 6px; font-size: 0.9rem;">
+                        <input type="password" id="supabaseKey" placeholder="Supabase Anon Key" 
+                               style="width: 100%; padding: 10px; margin-bottom: 10px; border: 2px solid #e1e8ff; border-radius: 6px; font-size: 0.9rem;">
+                        <div style="display: flex; gap: 8px; margin-bottom: 15px;">
+                            <button class="btn" id="connectSupabaseBtn" style="flex: 1; background: linear-gradient(45deg, #3ECF8E, #2DD4BF); color: white; font-size: 0.85rem; padding: 8px;">
+                                🔗 เชื่อมต่อ
+                            </button>
+                            <button class="btn" id="testConnectionBtn" style="flex: 1; background: linear-gradient(45deg, #8B5CF6, #A855F7); color: white; font-size: 0.85rem; padding: 8px;" disabled>
+                                🧪 ทดสอบ
+                            </button>
+                        </div>
+                        <div id="connectionStatus" class="connection-status"></div>
+                        <div style="font-size: 0.8rem; color: #666; line-height: 1.4;">
+                            💡 <strong>วิธีตั้งค่า:</strong><br>
+                            1. สร้างโปรเจค <a href="https://supabase.com" target="_blank">Supabase.com</a><br>
+                            2. สร้างตาราง <code>print_jobs</code><br>
+                            3. คัดลอก URL และ API Key มาใส่
+                        </div>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <h3>💾 จัดการงานพิมพ์</h3>
+                    <div class="job-management">
+                        <input type="text" id="jobName" placeholder="ชื่องานพิมพ์ (เช่น นามบัตรบริษัท ABC)" 
+                               style="width: 100%; padding: 12px; margin-bottom: 10px; border: 2px solid #e1e8ff; border-radius: 8px; font-size: 1rem;">
+                        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                            <button class="btn" id="saveJobBtn" style="flex: 1; background: linear-gradient(45deg, #4ECDC4, #44A08D); color: white; font-size: 0.9rem; padding: 10px;">
+                                💾 บันทึกงาน
+                            </button>
+                            <select id="savedJobs" style="flex: 2; padding: 10px; border: 2px solid #e1e8ff; border-radius: 8px; font-size: 0.9rem;">
+                                <option value="">เลือกงานที่บันทึกไว้...</option>
+                            </select>
+                            <button class="btn" id="loadJobBtn" style="flex: 1; background: linear-gradient(45deg, #FFA726, #FF7043); color: white; font-size: 0.9rem; padding: 10px;">
+                                📂 โหลดงาน
+                            </button>
+                        </div>
+                        <div style="display: flex; gap: 8px; margin-bottom: 15px;">
+                            <button class="btn" id="syncJobsBtn" style="flex: 1; background: linear-gradient(45deg, #2196F3, #03DAC6); color: white; font-size: 0.85rem; padding: 8px;" disabled>
+                                🔄 ซิงค์ออนไลน์
+                            </button>
+                            <button class="btn" id="deleteJobBtn" style="flex: 1; background: linear-gradient(45deg, #FF5722, #E91E63); color: white; font-size: 0.85rem; padding: 8px;">
+                                🗑️ ลบงาน
+                            </button>
+                        </div>
+                        <div id="storageInfo" class="storage-info"></div>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <h3>📁 เลือกภาพนามบัตร</h3>
+                    <div class="file-upload">
+                        <input type="file" id="imageFile" accept="image/*">
+                        <div class="file-upload-btn">
+                            📤 เลือกไฟล์ภาพ (JPG, PNG, GIF)
+                        </div>
+                    </div>
+                    <div id="imagePreview"></div>
+                </div>
+
+                <div class="control-group">
+                    <h3>📍 ปรับตำแหน่ง</h3>
+                    <div class="slider-group">
+                        <label>ซ้าย-ขวา <span class="units">(Left-Right)</span></label>
+                        <input type="range" class="slider" id="offsetX" min="-20" max="20" value="0">
+                        <span class="value-display" id="offsetX-value">0</span> <span class="units">mm</span>
+                    </div>
+                    <div class="slider-group">
+                        <label>บน-ล่าง <span class="units">(Top-Bottom)</span></label>
+                        <input type="range" class="slider" id="offsetY" min="-20" max="20" value="0">
+                        <span class="value-display" id="offsetY-value">0</span> <span class="units">mm</span>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <h3>📐 ปรับขนาดการ์ด</h3>
+                    <div class="slider-group">
+                        <label>ความกว้าง <span class="units">(Width)</span></label>
+                        <input type="range" class="slider" id="cardWidth" min="50" max="120" value="90">
+                        <span class="value-display" id="cardWidth-value">90</span> <span class="units">mm</span>
+                    </div>
+                    <div class="slider-group">
+                        <label>ความสูง <span class="units">(Height)</span></label>
+                        <input type="range" class="slider" id="cardHeight" min="30" max="80" value="54">
+                        <span class="value-display" id="cardHeight-value">54</span> <span class="units">mm</span>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <h3>📏 ปรับระยะห่าง</h3>
+                    <div class="slider-group">
+                        <label>ระยะห่างคอลัมน์ <span class="units">(Column Gap)</span></label>
+                        <input type="range" class="slider" id="gapX" min="0" max="20" value="5">
+                        <span class="value-display" id="gapX-value">5</span> <span class="units">mm</span>
+                    </div>
+                    <div class="slider-group">
+                        <label>ระยะห่างแถว <span class="units">(Row Gap)</span></label>
+                        <input type="range" class="slider" id="gapY" min="0" max="20" value="5">
+                        <span class="value-display" id="gapY-value">5</span> <span class="units">mm</span>
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn btn-print" id="printBtn" disabled>
+                        🖨️ พิมพ์
+                    </button>
+                    <button class="btn btn-pdf" id="pdfBtn" disabled>
+                        📄 สร้าง PDF
+                    </button>
+                </div>
+
+                <div id="statusMessage"></div>
+            </div>
+
+            <div class="preview">
+                <h3 style="margin-bottom: 20px; color: #2c3e50; text-align: center;">
+                    📋 ตัวอย่างกระดาษ A4 (210x297mm)
+                </h3>
+                <div class="a4-preview">
+                    <div class="card-container" id="cardContainer">
+                        <!-- Cards will be generated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedImage = null;
+        let imageDataURL = null;
+
+        // DOM elements
+        const imageFile = document.getElementById('imageFile');
+        const imagePreview = document.getElementById('imagePreview');
+        const cardContainer = document.getElementById('cardContainer');
+        const printBtn = document.getElementById('printBtn');
+        const pdfBtn = document.getElementById('pdfBtn');
+        const statusMessage = document.getElementById('statusMessage');
+
+        // Job management elements
+        const jobName = document.getElementById('jobName');
+        const saveJobBtn = document.getElementById('saveJobBtn');
+        const savedJobs = document.getElementById('savedJobs');
+        const loadJobBtn = document.getElementById('loadJobBtn');
+        const deleteJobBtn = document.getElementById('deleteJobBtn');
+        const syncJobsBtn = document.getElementById('syncJobsBtn');
+
+        // Supabase elements
+        const supabaseUrl = document.getElementById('supabaseUrl');
+        const supabaseKey = document.getElementById('supabaseKey');
+        const connectSupabaseBtn = document.getElementById('connectSupabaseBtn');
+        const testConnectionBtn = document.getElementById('testConnectionBtn');
+        const connectionStatus = document.getElementById('connectionStatus');
+        const storageInfo = document.getElementById('storageInfo');
+
+        // Sliders
+        const offsetX = document.getElementById('offsetX');
+        const offsetY = document.getElementById('offsetY');
+        const gapX = document.getElementById('gapX');
+        const gapY = document.getElementById('gapY');
+        const cardWidth = document.getElementById('cardWidth');
+        const cardHeight = document.getElementById('cardHeight');
+
+        // Supabase client
+        let supabase = null;
+        let isConnected = false;
+        let savedJobsData = {};
+
+        // Initialize cards
+        function createCards() {
+            cardContainer.innerHTML = '';
+            for (let i = 0; i < 10; i++) {
+                const card = document.createElement('div');
+                card.className = 'business-card';
+                const placeholder = document.createElement('div');
+                placeholder.className = 'card-placeholder';
+                placeholder.innerHTML = '📇<br>นามบัตร ' + (i + 1) + '<br>กำหนดเอง';
+                card.appendChild(placeholder);
+                cardContainer.appendChild(card);
+            }
+        }
+
+        // Update card positions and spacing
+        function updateLayout() {
+            const offsetXVal = parseInt(offsetX.value);
+            const offsetYVal = parseInt(offsetY.value);
+            const gapXVal = parseInt(gapX.value);
+            const gapYVal = parseInt(gapY.value);
+            const cardWidthVal = parseInt(cardWidth.value);
+            const cardHeightVal = parseInt(cardHeight.value);
+
+            // Update value displays
+            document.getElementById('offsetX-value').textContent = offsetXVal;
+            document.getElementById('offsetY-value').textContent = offsetYVal;
+            document.getElementById('gapX-value').textContent = gapXVal;
+            document.getElementById('gapY-value').textContent = gapYVal;
+            document.getElementById('cardWidth-value').textContent = cardWidthVal;
+            document.getElementById('cardHeight-value').textContent = cardHeightVal;
+
+            // Calculate positions (convert mm to pixels for display)
+            const mmToPx = 3.779527559; // 1mm = 3.78px at 96dpi
+            const cardWidthPx = cardWidthVal * mmToPx;
+            const cardHeightPx = cardHeightVal * mmToPx;
+            
+            const cards = cardContainer.querySelectorAll('.business-card');
+            cards.forEach((card, index) => {
+                const row = Math.floor(index / 2);
+                const col = index % 2;
+                
+                const x = (offsetXVal * mmToPx) + (col * (cardWidthPx + gapXVal * mmToPx));
+                const y = (offsetYVal * mmToPx) + (row * (cardHeightPx + gapYVal * mmToPx));
+                
+                card.style.left = x + 'px';
+                card.style.top = y + 'px';
+                card.style.width = cardWidthPx + 'px';
+                card.style.height = cardHeightPx + 'px';
+                card.style.position = 'absolute';
+            });
+        }
+
+        // Update cards with selected image
+        function updateCardsWithImage() {
+            if (!imageDataURL) return;
+            
+            const cards = cardContainer.querySelectorAll('.business-card');
+            cards.forEach(card => {
+                const img = document.createElement('img');
+                img.src = imageDataURL;
+                img.alt = 'Business Card';
+                card.innerHTML = '';
+                card.appendChild(img);
+            });
+        }
+
+        // Show status message
+        function showStatus(message, type = 'success') {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'status-message status-' + type;
+            messageDiv.textContent = message;
+            statusMessage.innerHTML = '';
+            statusMessage.appendChild(messageDiv);
+            
+            setTimeout(() => {
+                statusMessage.innerHTML = '';
+            }, 3000);
+        }
+
+        // Supabase Functions
+        async function connectToSupabase() {
+        const url = supabaseUrl.value.trim();
+        const key = supabaseKey.value.trim();
+
+        if (!url || !key) {
+            showStatus('กรุณาใส่ URL และ API Key', 'error');
+            return;
+        }
+
+        try {
+            showConnectionStatus('connecting', 'กำลังเชื่อมต่อ...');
+            console.log('Connecting to Supabase with URL:', url);
+            supabase = window.supabase.createClient(url, key);
+
+            // Test connection
+            const { data, error } = await supabase
+                .from('print_jobs')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (error) {
+                console.error('Supabase connection error:', error);
+                showConnectionStatus('disconnected', 'เชื่อมต่อล้มเหลว: ' + error.message);
+                showStatus('ซิงค์ล้มเหลว: ' + error.message, 'error');
+                return;
+            }
+
+            // Merge with local data
+            data.forEach(job => {
+                savedJobsData[job.name] = {
+                    name: job.name,
+                    imageDataURL: job.image_data,
+                    imageName: job.image_name,
+                    imageSize: job.image_size || 0,
+                    settings: job.settings,
+                    timestamp: new Date(job.created_at).toLocaleString('th-TH'),
+                    id: job.id,
+                    source: 'supabase'
+                };
+            });
+
+            loadSavedJobsList();
+            updateStorageInfo();
+            showConnectionStatus('connected', 'เชื่อมต่อสำเร็จ!');
+            showStatus('ซิงค์ข้อมูลสำเร็จ! (' + data.length + ' งานจาก Supabase)', 'success');
+            isConnected = true;
+            // Save credentials to localStorage
+            try {
+                localStorage.setItem('supabaseUrl', url);
+                localStorage.setItem('supabaseKey', key);
+            } catch (e) {
+                console.log('Cannot save Supabase credentials to localStorage:', e);
+            }
+            // Enable test and sync buttons
+            testConnectionBtn.disabled = false;
+            syncJobsBtn.disabled = false;
+
+        } catch (error) {
+            console.error('Sync error (catch):', error);
+            showConnectionStatus('disconnected', 'เชื่อมต่อล้มเหลว: ' + error.message);
+            showStatus('ซิงค์ล้มเหลว: ' + error.message, 'error');
+        }
+        }
+
+        async function saveToSupabase(jobData) {
+            if (!isConnected || !supabase) {
+                showStatus('ยังไม่ได้เชื่อมต่อ Supabase', 'error');
+                return false;
+            }
+            try {
+                const { data, error } = await supabase
+                    .from('print_jobs')
+                    .upsert({
+                        name: jobData.name,
+                        image_data: jobData.imageDataURL,
+                        image_name: jobData.imageName,
+                        image_size: jobData.imageSize,
+                        settings: jobData.settings,
+                        updated_at: new Date().toISOString()
+                    }, {
+                        onConflict: 'name'
+                    })
+                    .select();
+                console.log('saveToSupabase result:', { data, error });
+                if (error) {
+                    showStatus('บันทึก Supabase ล้มเหลว: ' + (error.message || JSON.stringify(error)), 'error');
+                    console.error('saveToSupabase error object:', error);
+                    alert('saveToSupabase error: ' + JSON.stringify(error));
+                    return false;
+                }
+                if (!data) {
+                    showStatus('บันทึก Supabase ไม่สำเร็จ: ไม่ได้รับข้อมูลกลับ', 'error');
+                    console.error('saveToSupabase: No data returned', { data, error });
+                    alert('saveToSupabase: No data returned: ' + JSON.stringify({ data, error }));
+                    return false;
+                }
+                showStatus('บันทึก Supabase สำเร็จ!', 'success');
+                return true;
+            } catch (error) {
+                console.error('Save to Supabase error (catch):', error);
+                showStatus('บันทึกท้องถิ่นสำเร็จ แต่ไม่สามารถซิงค์ Supabase: ' + (error.message || JSON.stringify(error)), 'error');
+                alert('Save to Supabase error (catch): ' + JSON.stringify(error));
+                return false;
+            }
+        }
+
+        async function deleteFromSupabase(jobName) {
+            if (!isConnected || !supabase) return false;
+
+            try {
+                const { error } = await supabase
+                    .from('print_jobs')
+                    .delete()
+                    .eq('name', jobName);
+
+                if (error) throw error;
+
+                console.log('Deleted from Supabase:', jobName);
+                return true;
+
+            } catch (error) {
+                console.error('Delete from Supabase error:', error);
+                return false;
+            }
+        }
+
+        function updateStorageInfo() {
+            const localJobs = Object.keys(savedJobsData).filter(key => savedJobsData[key].source !== 'supabase').length;
+            const cloudJobs = Object.keys(savedJobsData).filter(key => savedJobsData[key].source === 'supabase').length;
+            const totalJobs = Object.keys(savedJobsData).length;
+
+            if (isConnected) {
+                storageInfo.className = 'storage-info cloud';
+                storageInfo.innerHTML = 'Online Storage: ' + cloudJobs + ' งาน<br>Local Storage: ' + localJobs + ' งาน<br>รวมทั้งหมด: ' + totalJobs + ' งาน';
+            } else {
+                storageInfo.className = 'storage-info';
+                storageInfo.innerHTML = 'Local Storage: ' + totalJobs + ' งาน<br>ไม่ได้เชื่อมต่อ Supabase';
+            }
+        }
+
+        async function saveJob() {
+        const name = jobName.value.trim();
+        if (!name) {
+            showStatus('กรุณาใส่ชื่องานพิมพ์', 'error');
+            return;
+        }
+
+        if (!selectedImage || !imageDataURL) {
+            showStatus('กรุณาเลือกภาพก่อนบันทึกงาน', 'error');
+            return;
+        }
+
+        const jobData = {
+            name: name,
+            imageDataURL: imageDataURL,
+            imageName: selectedImage.name,
+            imageSize: selectedImage.size || 0,
+            settings: {
+                offsetX: parseInt(offsetX.value),
+                offsetY: parseInt(offsetY.value),
+                gapX: parseInt(gapX.value),
+                gapY: parseInt(gapY.value),
+                cardWidth: parseInt(cardWidth.value),
+                cardHeight: parseInt(cardHeight.value)
+            },
+            timestamp: new Date().toLocaleString('th-TH', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            }),
+            source: 'local'
+        };
+
+        // Save locally first
+        savedJobsData[name] = jobData;
+
+        // Try to save to localStorage
+        try {
+            if (typeof Storage !== "undefined") {
+                const localData = {};
+                Object.entries(savedJobsData).forEach(([key, value]) => {
+                    if (value.source === 'local') {
+                        localData[key] = value;
+                    }
+                });
+                localStorage.setItem('businessCardJobs', JSON.stringify(localData));
+            }
+        } catch (e) {
+            console.log('localStorage save failed:', e);
+        }
+
+        showStatus('กำลังบันทึกงานไปยัง Supabase...', 'success');
+        console.log('saveJob: calling saveToSupabase', jobData);
+        // Try to save to Supabase
+        try {
+            const supabaseSaved = await saveToSupabase(jobData);
+            console.log('saveJob: saveToSupabase returned', supabaseSaved);
+            if (supabaseSaved) {
+                jobData.source = 'supabase';
+                savedJobsData[name] = jobData;
+            }
+            loadSavedJobsList();
+            updateStorageInfo();
+            const storageText = supabaseSaved ? '(บันทึกออนไลน์)' : '(บันทึกท้องถิ่น)';
+            showStatus('บันทึกงาน "' + name + '" สำเร็จ! ' + storageText, 'success');
+            jobName.value = '';
+        } catch (e) {
+            console.error('saveJob error (catch):', e);
+            showStatus('เกิดข้อผิดพลาดขณะบันทึกงาน: ' + (e.message || JSON.stringify(e)), 'error');
+            alert('saveJob error (catch): ' + JSON.stringify(e));
+        }
+        }
+
+        function loadSavedJobsList() {
+            savedJobs.innerHTML = '<option value="">เลือกงานที่บันทึกไว้...</option>';
+            
+            // Load from localStorage first (local jobs only)
+            try {
+                if (typeof Storage !== "undefined") {
+                    const stored = localStorage.getItem('businessCardJobs');
+                    if (stored) {
+                        const storedData = JSON.parse(stored);
+                        Object.entries(storedData).forEach(([key, job]) => {
+                            if (!savedJobsData[key]) {
+                                savedJobsData[key] = job;
+                                savedJobsData[key].source = 'local';
+                            }
+                        });
+                    }
+                }
+            } catch (e) {
+                console.log('Could not load from localStorage:', e);
+            }
+            
+            // Populate dropdown
+            const jobKeys = Object.keys(savedJobsData);
+            if (jobKeys.length === 0) {
+                const option = document.createElement('option');
+                option.value = "";
+                option.textContent = "ยังไม่มีงานที่บันทึกไว้";
+                option.disabled = true;
+                savedJobs.appendChild(option);
+                return;
+            }
+
+            // Sort jobs by timestamp (newest first)
+            const sortedJobs = jobKeys.sort((a, b) => {
+                const dateA = new Date(savedJobsData[a].timestamp);
+                const dateB = new Date(savedJobsData[b].timestamp);
+                return dateB - dateA;
+            });
+
+            sortedJobs.forEach(jobKey => {
+                const job = savedJobsData[jobKey];
+                const option = document.createElement('option');
+                option.value = jobKey;
+                const sizeText = job.imageSize ? ' - ' + (job.imageSize/1024).toFixed(1) + 'KB' : '';
+                const sourceIcon = job.source === 'supabase' ? '🌐' : '💾';
+                option.textContent = sourceIcon + ' ' + job.name + ' (' + job.timestamp + ')' + sizeText;
+                savedJobs.appendChild(option);
+            });
+            
+            updateStorageInfo();
+            console.log('Loaded ' + jobKeys.length + ' saved jobs');
+        }
+
+        function loadJob() {
+            const selectedJobKey = savedJobs.value;
+            if (!selectedJobKey || selectedJobKey === "") {
+                showStatus('กรุณาเลือกงานที่ต้องการโหลด', 'error');
+                return;
+            }
+
+            const jobData = savedJobsData[selectedJobKey];
+            if (!jobData) {
+                showStatus('ไม่พบข้อมูลงานที่เลือก', 'error');
+                return;
+            }
+
+            try {
+                // Load image data
+                imageDataURL = jobData.imageDataURL;
+                selectedImage = { 
+                    name: jobData.imageName,
+                    size: jobData.imageSize || 0
+                };
+                
+                // Load settings
+                offsetX.value = jobData.settings.offsetX || 0;
+                offsetY.value = jobData.settings.offsetY || 0;
+                gapX.value = jobData.settings.gapX || 5;
+                gapY.value = jobData.settings.gapY || 5;
+                cardWidth.value = jobData.settings.cardWidth || 90;
+                cardHeight.value = jobData.settings.cardHeight || 54;
+                
+                // Update preview
+                const sizeText = jobData.imageSize ? ' (' + (jobData.imageSize/1024).toFixed(1) + ' KB)' : '';
+                const sourceIcon = jobData.source === 'supabase' ? '🌐' : '💾';
+                
+                const previewHTML = '<img src="' + imageDataURL + '" class="image-preview" alt="Preview">' +
+                    '<div class="job-info">' +
+                    sourceIcon + ' ' + jobData.imageName + sizeText + '<br>' +
+                    '📅 บันทึกเมื่อ: ' + jobData.timestamp + '<br>' +
+                    '🎛️ การตั้งค่า: ตำแหน่ง (' + jobData.settings.offsetX + ', ' + jobData.settings.offsetY + ') ขนาด ' + jobData.settings.cardWidth + '×' + jobData.settings.cardHeight + 'mm' +
+                    '</div>';
+                
+                imagePreview.innerHTML = previewHTML;
+                
+                // Update cards and layout
+                updateCardsWithImage();
+                updateLayout();
+                
+                // Enable buttons
+                printBtn.disabled = false;
+                pdfBtn.disabled = false;
+                
+                const sourceText = jobData.source === 'supabase' ? '(ออนไลน์)' : '(ท้องถิ่น)';
+                showStatus('โหลดงาน "' + jobData.name + '" สำเร็จ! ' + sourceText, 'success');
+                
+            } catch (e) {
+                console.error('Error loading job:', e);
+                showStatus('เกิดข้อผิดพลาดในการโหลดงาน', 'error');
+            }
+        }
+
+        async function deleteJob() {
+            const selectedJobKey = savedJobs.value;
+            if (!selectedJobKey || selectedJobKey === "") {
+                showStatus('กรุณาเลือกงานที่ต้องการลบ', 'error');
+                return;
+            }
+
+            const jobData = savedJobsData[selectedJobKey];
+            if (!jobData) {
+                showStatus('ไม่พบงานที่ต้องการลบ', 'error');
+                return;
+            }
+
+            const sourceText = jobData.source === 'supabase' ? '(ออนไลน์)' : '(ท้องถิ่น)';
+            if (confirm('ต้องการลบงาน "' + jobData.name + '" ' + sourceText + ' ใช่หรือไม่?\n\nบันทึกเมื่อ: ' + jobData.timestamp)) {
+                try {
+                    // Delete from Supabase if it's a cloud job
+                    if (jobData.source === 'supabase') {
+                        await deleteFromSupabase(selectedJobKey);
+                    }
+                    
+                    // Delete from memory
+                    delete savedJobsData[selectedJobKey];
+                    
+                    // Update localStorage (local jobs only)
+                    try {
+                        if (typeof Storage !== "undefined") {
+                            const localJobs = {};
+                            Object.entries(savedJobsData).forEach(([key, value]) => {
+                                if (value.source === 'local') {
+                                    localJobs[key] = value;
+                                }
+                            });
+                            localStorage.setItem('businessCardJobs', JSON.stringify(localJobs));
+                        }
+                    } catch (e) {
+                        console.log('Could not update localStorage:', e);
+                    }
+                    
+                    loadSavedJobsList();
+                    showStatus('ลบงาน "' + jobData.name + '" สำเร็จ! (เหลือ ' + Object.keys(savedJobsData).length + ' งาน)', 'success');
+                    
+                    // Reset selection
+                    savedJobs.value = "";
+                    
+                } catch (e) {
+                    console.error('Error deleting job:', e);
+                    showStatus('เกิดข้อผิดพลาดในการลบงาน', 'error');
+                }
+            }
+        }
+
+        // Handle image selection
+        imageFile.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            // Validate file type
+            if (!file.type.startsWith('image/')) {
+                showStatus('กรุณาเลือกไฟล์ภาพ (JPG, PNG, GIF)', 'error');
+                return;
+            }
+
+            // Validate file size (max 10MB)
+            if (file.size > 10 * 1024 * 1024) {
+                showStatus('ไฟล์ใหญ่เกินไป ( สูงสุด 10MB)', 'error');
+                return;
+            }
+
+            showStatus('กำลังโหลดภาพ...', 'success');
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                imageDataURL = e.target.result;
+                selectedImage = {
+                    name: file.name,
+                    size: file.size,
+                    type: file.type
+                };
+                
+                // Show image preview
+                const previewHTML = '<img src="' + imageDataURL + '" class="image-preview" alt="Preview">' +
+                    '<p style="color: #666; font-size: 0.9rem; margin-top: 8px;">' +
+                    '📁 ' + file.name + ' (' + (file.size/1024).toFixed(1) + ' KB)' +
+                    '</p>';
+                
+                imagePreview.innerHTML = previewHTML;
+                
+                // Update all cards with the image
+                updateCardsWithImage();
+                
+                // Enable buttons
+                printBtn.disabled = false;
+                pdfBtn.disabled = false;
+                
+                showStatus('โหลดภาพสำเร็จ! พร้อมบันทึกงานและพิมพ์', 'success');
+            };
+            
+            reader.onerror = function() {
+                showStatus('ไม่สามารถอ่านไฟล์ภาพได้', 'error');
+            };
+            
+            reader.readAsDataURL(file);
+        });
+
+        // Print function
+        printBtn.addEventListener('click', function() {
+            if (!selectedImage) {
+                showStatus('กรุณาเลือกภาพก่อนพิมพ์', 'error');
+                return;
+            }
+            
+            showStatus('กำลังเตรียมพิมพ์...', 'success');
+            setTimeout(() => {
+                window.print();
+            }, 500);
+        });
+
+        // PDF generation
+        pdfBtn.addEventListener('click', async function() {
+            if (!selectedImage) {
+                showStatus('กรุณาเลือกภาพก่อนสร้าง PDF', 'error');
+                return;
+            }
+
+            showStatus('กำลังสร้าง PDF...', 'success');
+
+            try {
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                
+                // A4 size: 210 x 297 mm
+                const offsetXVal = parseInt(offsetX.value);
+                const offsetYVal = parseInt(offsetY.value);
+                const gapXVal = parseInt(gapX.value);
+                const gapYVal = parseInt(gapY.value);
+                const cardWidthVal = parseInt(cardWidth.value);
+                const cardHeightVal = parseInt(cardHeight.value);
+                
+                // Add 10 cards (2 columns, 5 rows)
+                for (let i = 0; i < 10; i++) {
+                    const row = Math.floor(i / 2);
+                    const col = i % 2;
+                    
+                    const x = offsetXVal + (col * (cardWidthVal + gapXVal));
+                    const y = offsetYVal + (row * (cardHeightVal + gapYVal));
+                    
+                    // Add image to PDF
+                    pdf.addImage(imageDataURL, 'JPEG', x, y, cardWidthVal, cardHeightVal);
+                }
+                
+                // Save PDF
+                const fileName = selectedImage.name.split('.')[0] + '_business_cards.pdf';
+                pdf.save(fileName);
+                
+                showStatus('สร้าง PDF สำเร็จ!', 'success');
+            } catch (error) {
+                console.error('PDF generation error:', error);
+                showStatus('เกิดข้อผิดพลาดในการสร้าง PDF', 'error');
+            }
+        });
+
+        // Event listeners for sliders
+        [offsetX, offsetY, gapX, gapY, cardWidth, cardHeight].forEach(slider => {
+            slider.addEventListener('input', updateLayout);
+        });
+
+        // Job management event listeners
+        saveJobBtn.addEventListener('click', saveJob);
+        loadJobBtn.addEventListener('click', loadJob);
+        deleteJobBtn.addEventListener('click', deleteJob);
+        connectSupabaseBtn.addEventListener('click', connectToSupabase);
+        testConnectionBtn.addEventListener('click', testConnection);
+        syncJobsBtn.addEventListener('click', syncFromSupabase);
+
+        // Auto-load saved Supabase credentials
+        function loadSavedCredentials() {
+            try {
+                const savedUrl = localStorage.getItem('supabaseUrl');
+                const savedKey = localStorage.getItem('supabaseKey');
+                
+                if (savedUrl) supabaseUrl.value = savedUrl;
+                if (savedKey) supabaseKey.value = savedKey;
+                
+                if (savedUrl && savedKey) {
+                    showConnectionStatus('disconnected', 'พร้อมเชื่อมต่อ (กด เชื่อมต่อ)');
+                }
+            } catch (e) {
+                console.log('Could not load saved credentials:', e);
+            }
+        }
+
+        // Initialize
+        createCards();
+        updateLayout();
+        loadSavedCredentials();
+        loadSavedJobsList();
+        
+        // Welcome message
+        showStatus('ยินดีต้อนรับ! เลือกภาพเพื่อเริ่มต้น หรือตั้งค่า Supabase สำหรับเก็บข้อมูลออนไลน์', 'success');
+        
+        // Debug info
+    // ฟังก์ชันแสดงสถานะการเชื่อมต่อ Supabase
+    function showConnectionStatus(type, message) {
+        connectionStatus.className = 'connection-status ' + type;
+        connectionStatus.textContent = message;
+    }
+
+    // ฟังก์ชันทดสอบการเชื่อมต่อ Supabase
+    async function testConnection() {
+        if (!supabase) {
+            showStatus('กรุณาเชื่อมต่อ Supabase ก่อน', 'error');
+            return;
+        }
+        try {
+            showStatus('กำลังทดสอบการเชื่อมต่อ...', 'success');
+            const { data, error } = await supabase
+                .from('print_jobs')
+                .select('id')
+                .limit(1);
+            console.log('testConnection result:', { data, error });
+            if (error) {
+                showStatus('ทดสอบล้มเหลว: ' + error.message, 'error');
+            } else {
+                showStatus('ทดสอบการเชื่อมต่อสำเร็จ! (พบ ' + (data ? data.length : 0) + ' แถว)', 'success');
+            }
+            updateStorageInfo();
+        } catch (error) {
+            console.error('Connection test error:', error);
+            showStatus('ทดสอบล้มเหลว: ' + error.message, 'error');
+        }
+    }
+
+    // ฟังก์ชันซิงค์ข้อมูลจาก Supabase
+    async function syncFromSupabase() {
+        if (!isConnected || !supabase) {
+            showStatus('ยังไม่ได้เชื่อมต่อ Supabase', 'error');
+            return;
+        }
+        try {
+            showStatus('กำลังซิงค์ข้อมูลจาก Supabase...', 'success');
+            console.log('Syncing from Supabase...');
+            const { data, error } = await supabase
+                .from('print_jobs')
+                .select('*')
+                .order('created_at', { ascending: false });
+            if (error) {
+                console.error('Sync error:', error);
+                showStatus('ซิงค์ล้มเหลว: ' + error.message, 'error');
+                return;
+            }
+            // Merge jobs from Supabase
+            data.forEach(job => {
+                savedJobsData[job.name] = {
+                    name: job.name,
+                    imageDataURL: job.image_data,
+                    imageName: job.image_name,
+                    imageSize: job.image_size || 0,
+                    settings: job.settings,
+                    timestamp: new Date(job.created_at).toLocaleString('th-TH'),
+                    id: job.id,
+                    source: 'supabase'
+                };
+            });
+            loadSavedJobsList();
+            updateStorageInfo();
+            showStatus('ซิงค์ข้อมูลสำเร็จ! (' + data.length + ' งานจาก Supabase)', 'success');
+        } catch (error) {
+            console.error('Sync error (catch):', error);
+            showStatus('ซิงค์ล้มเหลว: ' + error.message, 'error');
+        }
+    }
+        console.log('Business Card Printer with Supabase initialized');
+        console.log('Storage available:', typeof Storage !== "undefined");
+        console.log('Supabase available:', typeof window.supabase !== "undefined");
+        console.log('Saved jobs:', Object.keys(savedJobsData).length);
+    </script>
+</body>
+</html>
