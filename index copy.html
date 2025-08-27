@@ -21,7 +21,7 @@
         }
 
         .container {
-            max-width: 1500px;
+            max-width: 1400px;
             margin: 0 auto;
             background: white;
             border-radius: 20px;
@@ -232,8 +232,8 @@
 
         .a4-preview {
             width: 100%;
-            max-width: 1000px;
-            height: 1200px;
+            max-width: 900px;
+            height: 900px;
             background: white;
             border: 2px solid #ddd;
             margin: 0 auto;
@@ -385,92 +385,20 @@
             border-left-color: #2196F3;
         }
 
-        /* Print Styles - ปรับปรุงให้ขนาดตรงกับ PDF */
         @media print {
-            * {
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-            }
-            
-            @page {
-                size: A4;
-                margin: 0;
-            }
-            
-            body { 
-                background: white; 
-                margin: 0;
-                padding: 0;
-            }
-            
-            .container { 
-                box-shadow: none; 
-                border-radius: 0;
-                margin: 0;
-                max-width: none;
-            }
-            
-            .header, .controls { 
-                display: none !important; 
-            }
-            
-            .content { 
-                padding: 0; 
-                margin: 0;
-                display: block;
-            }
-            
-            .preview { 
-                border: none; 
-                background: white; 
-                border-radius: 0;
-                padding: 0;
-                margin: 0;
-                max-width: none;
-                flex: none;
-            }
-            
+            body { background: white; }
+            .container { box-shadow: none; }
+            .header, .controls { display: none; }
+            .content { padding: 0; }
+            .preview { border: none; background: white; }
             .a4-preview { 
-                width: 210mm !important;
-                height: 297mm !important;
-                max-width: none !important;
-                border: none !important;
-                box-shadow: none !important;
-                border-radius: 0 !important;
-                margin: 0 !important;
-                position: relative !important;
+                width: 210mm;
+                height: 297mm;
+                max-width: none;
+                border: none;
+                box-shadow: none;
             }
-            
-            .card-container {
-                position: absolute !important;
-                top: 0 !important;
-                left: 0 !important;
-                width: 210mm !important;
-                height: 297mm !important;
-                display: block !important;
-            }
-            
-            .business-card {
-                position: absolute !important;
-                border: none !important;
-                background: transparent !important;
-                border-radius: 0 !important;
-                box-shadow: none !important;
-                display: block !important;
-                overflow: hidden !important;
-            }
-            
-            .business-card img {
-                width: 100% !important;
-                height: 100% !important;
-                object-fit: cover !important;
-                border-radius: 0 !important;
-                display: block !important;
-            }
-            
-            .card-placeholder {
-                display: none !important;
-            }
+            .preview h3 { display: none !important; }
         }
 
         @media (max-width: 768px) {
@@ -618,6 +546,7 @@
             </div>
 
             <div class="preview">
+                <!-- ลบหัวข้อ preview -->
                 <div class="a4-preview">
                     <div class="card-container" id="cardContainer">
                         <!-- Cards will be generated here -->
@@ -682,7 +611,7 @@
             }
         }
 
-        // Update card positions and spacing - ปรับปรุงให้ตำแหน่งการ์ดตรงกับ PDF
+        // Update card positions and spacing
         function updateLayout() {
             const offsetXVal = parseInt(offsetX.value);
             const offsetYVal = parseInt(offsetY.value);
@@ -712,59 +641,12 @@
                 const x = (offsetXVal * mmToPx) + (col * (cardWidthPx + gapXVal * mmToPx));
                 const y = (offsetYVal * mmToPx) + (row * (cardHeightPx + gapYVal * mmToPx));
                 
-                // Screen display
                 card.style.left = x + 'px';
                 card.style.top = y + 'px';
                 card.style.width = cardWidthPx + 'px';
                 card.style.height = cardHeightPx + 'px';
                 card.style.position = 'absolute';
             });
-            
-            // Apply print-specific positioning
-            updatePrintStyles();
-        }
-
-        // Update print styles dynamically
-        function updatePrintStyles() {
-            // Remove existing print style
-            const existingStyle = document.getElementById('dynamic-print-styles');
-            if (existingStyle) {
-                existingStyle.remove();
-            }
-
-            // Create new print styles
-            const style = document.createElement('style');
-            style.id = 'dynamic-print-styles';
-            
-            let printCSS = '@media print {\n';
-            
-            const cards = cardContainer.querySelectorAll('.business-card');
-            cards.forEach((card, index) => {
-                const row = Math.floor(index / 2);
-                const col = index % 2;
-                
-                const offsetXVal = parseInt(offsetX.value);
-                const offsetYVal = parseInt(offsetY.value);
-                const gapXVal = parseInt(gapX.value);
-                const gapYVal = parseInt(gapY.value);
-                const cardWidthVal = parseInt(cardWidth.value);
-                const cardHeightVal = parseInt(cardHeight.value);
-                
-                const x = offsetXVal + (col * (cardWidthVal + gapXVal));
-                const y = offsetYVal + (row * (cardHeightVal + gapYVal));
-                
-                printCSS += `  .business-card:nth-child(${index + 1}) {\n`;
-                printCSS += `    left: ${x}mm !important;\n`;
-                printCSS += `    top: ${y}mm !important;\n`;
-                printCSS += `    width: ${cardWidthVal}mm !important;\n`;
-                printCSS += `    height: ${cardHeightVal}mm !important;\n`;
-                printCSS += `  }\n`;
-            });
-            
-            printCSS += '}\n';
-            
-            style.textContent = printCSS;
-            document.head.appendChild(style);
         }
 
         // Update cards with selected image
@@ -882,11 +764,13 @@
                 if (error) {
                     showStatus('บันทึก Supabase ล้มเหลว: ' + (error.message || JSON.stringify(error)), 'error');
                     console.error('saveToSupabase error object:', error);
+                    alert('saveToSupabase error: ' + JSON.stringify(error));
                     return false;
                 }
                 if (!data) {
                     showStatus('บันทึก Supabase ไม่สำเร็จ: ไม่ได้รับข้อมูลกลับ', 'error');
                     console.error('saveToSupabase: No data returned', { data, error });
+                    alert('saveToSupabase: No data returned: ' + JSON.stringify({ data, error }));
                     return false;
                 }
                 showStatus('บันทึก Supabase สำเร็จ!', 'success');
@@ -894,6 +778,7 @@
             } catch (error) {
                 console.error('Save to Supabase error (catch):', error);
                 showStatus('บันทึกท้องถิ่นสำเร็จ แต่ไม่สามารถซิงค์ Supabase: ' + (error.message || JSON.stringify(error)), 'error');
+                alert('Save to Supabase error (catch): ' + JSON.stringify(error));
                 return false;
             }
         }
@@ -1003,6 +888,7 @@
         } catch (e) {
             console.error('saveJob error (catch):', e);
             showStatus('เกิดข้อผิดพลาดขณะบันทึกงาน: ' + (e.message || JSON.stringify(e)), 'error');
+            alert('saveJob error (catch): ' + JSON.stringify(e));
         }
         }
 
@@ -1310,77 +1196,6 @@
             }
         }
 
-        // ฟังก์ชันแสดงสถานะการเชื่อมต่อ Supabase
-        function showConnectionStatus(type, message) {
-            connectionStatus.className = 'connection-status ' + type;
-            connectionStatus.textContent = message;
-        }
-
-        // ฟังก์ชันทดสอบการเชื่อมต่อ Supabase
-        async function testConnection() {
-            if (!supabase) {
-                showStatus('กรุณาเชื่อมต่อ Supabase ก่อน', 'error');
-                return;
-            }
-            try {
-                showStatus('กำลังทดสอบการเชื่อมต่อ...', 'success');
-                const { data, error } = await supabase
-                    .from('print_jobs')
-                    .select('id')
-                    .limit(1);
-                console.log('testConnection result:', { data, error });
-                if (error) {
-                    showStatus('ทดสอบล้มเหลว: ' + error.message, 'error');
-                } else {
-                    showStatus('ทดสอบการเชื่อมต่อสำเร็จ! (พบ ' + (data ? data.length : 0) + ' แถว)', 'success');
-                }
-                updateStorageInfo();
-            } catch (error) {
-                console.error('Connection test error:', error);
-                showStatus('ทดสอบล้มเหลว: ' + error.message, 'error');
-            }
-        }
-
-        // ฟังก์ชันซิงค์ข้อมูลจาก Supabase
-        async function syncFromSupabase() {
-            if (!isConnected || !supabase) {
-                showStatus('ยังไม่ได้เชื่อมต่อ Supabase', 'error');
-                return;
-            }
-            try {
-                showStatus('กำลังซิงค์ข้อมูลจาก Supabase...', 'success');
-                console.log('Syncing from Supabase...');
-                const { data, error } = await supabase
-                    .from('print_jobs')
-                    .select('*')
-                    .order('created_at', { ascending: false });
-                if (error) {
-                    console.error('Sync error:', error);
-                    showStatus('ซิงค์ล้มเหลว: ' + error.message, 'error');
-                    return;
-                }
-                // Merge jobs from Supabase
-                data.forEach(job => {
-                    savedJobsData[job.name] = {
-                        name: job.name,
-                        imageDataURL: job.image_data,
-                        imageName: job.image_name,
-                        imageSize: job.image_size || 0,
-                        settings: job.settings,
-                        timestamp: new Date(job.created_at).toLocaleString('th-TH'),
-                        id: job.id,
-                        source: 'supabase'
-                    };
-                });
-                loadSavedJobsList();
-                updateStorageInfo();
-                showStatus('ซิงค์ข้อมูลสำเร็จ! (' + data.length + ' งานจาก Supabase)', 'success');
-            } catch (error) {
-                console.error('Sync error (catch):', error);
-                showStatus('ซิงค์ล้มเหลว: ' + error.message, 'error');
-            }
-        }
-
         // Initialize
         createCards();
         updateLayout();
@@ -1391,6 +1206,76 @@
         showStatus('ยินดีต้อนรับ! เลือกภาพเพื่อเริ่มต้น หรือตั้งค่า Supabase สำหรับเก็บข้อมูลออนไลน์', 'success');
         
         // Debug info
+    // ฟังก์ชันแสดงสถานะการเชื่อมต่อ Supabase
+    function showConnectionStatus(type, message) {
+        connectionStatus.className = 'connection-status ' + type;
+        connectionStatus.textContent = message;
+    }
+
+    // ฟังก์ชันทดสอบการเชื่อมต่อ Supabase
+    async function testConnection() {
+        if (!supabase) {
+            showStatus('กรุณาเชื่อมต่อ Supabase ก่อน', 'error');
+            return;
+        }
+        try {
+            showStatus('กำลังทดสอบการเชื่อมต่อ...', 'success');
+            const { data, error } = await supabase
+                .from('print_jobs')
+                .select('id')
+                .limit(1);
+            console.log('testConnection result:', { data, error });
+            if (error) {
+                showStatus('ทดสอบล้มเหลว: ' + error.message, 'error');
+            } else {
+                showStatus('ทดสอบการเชื่อมต่อสำเร็จ! (พบ ' + (data ? data.length : 0) + ' แถว)', 'success');
+            }
+            updateStorageInfo();
+        } catch (error) {
+            console.error('Connection test error:', error);
+            showStatus('ทดสอบล้มเหลว: ' + error.message, 'error');
+        }
+    }
+
+    // ฟังก์ชันซิงค์ข้อมูลจาก Supabase
+    async function syncFromSupabase() {
+        if (!isConnected || !supabase) {
+            showStatus('ยังไม่ได้เชื่อมต่อ Supabase', 'error');
+            return;
+        }
+        try {
+            showStatus('กำลังซิงค์ข้อมูลจาก Supabase...', 'success');
+            console.log('Syncing from Supabase...');
+            const { data, error } = await supabase
+                .from('print_jobs')
+                .select('*')
+                .order('created_at', { ascending: false });
+            if (error) {
+                console.error('Sync error:', error);
+                showStatus('ซิงค์ล้มเหลว: ' + error.message, 'error');
+                return;
+            }
+            // Merge jobs from Supabase
+            data.forEach(job => {
+                savedJobsData[job.name] = {
+                    name: job.name,
+                    imageDataURL: job.image_data,
+                    imageName: job.image_name,
+                    imageSize: job.image_size || 0,
+                    settings: job.settings,
+                    timestamp: new Date(job.created_at).toLocaleString('th-TH'),
+                    id: job.id,
+                    source: 'supabase'
+                };
+            });
+            loadSavedJobsList();
+            updateStorageInfo();
+            showStatus('ซิงค์ข้อมูลสำเร็จ! (' + data.length + ' งานจาก Supabase)', 'success');
+        } catch (error) {
+            console.error('Sync error (catch):', error);
+            showStatus('ซิงค์ล้มเหลว: ' + error.message, 'error');
+        }
+    }
         console.log('Business Card Printer with Supabase initialized');
         console.log('Storage available:', typeof Storage !== "undefined");
         console.log('Supabase available:', typeof window.supabase !== "undefined");
